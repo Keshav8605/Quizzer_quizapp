@@ -1,59 +1,121 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:rflutter_alert/rflutter_alert.dart';
 
 void main() {
-  runApp(
-    Myapp(),
-  );
+  runApp(Myapp());
 }
 
 class Myapp extends StatefulWidget {
-  Myapp({super.key});
+  const Myapp({super.key});
 
   @override
   State<Myapp> createState() => _MyappState();
 }
 
 class _MyappState extends State<Myapp> {
-  @override
   String s = 'HIT TRUE TO START';
   int a = 0;
+  int score = 0;
+  List<dynamic> users = [];
+  List<Widget> icons = [];
 
-  List<String> string = [
-    'You’ve stalked your crush’s Instagram and accidentally liked an old picture.',
-    'You’ve texted “I’m on my way” while still in bed.',
-    'You’ve saved someone’s number as "Don’t Answer" or “Weird Guy.',
-    'You’ve spent more time choosing a filter for your selfie than taking the picture.',
-    'You’ve lied to a friend about being busy just because you didn’t want to hang out.',
-    'You’ve sent “haha” but didn’t even smile.',
-    'You’ve looked at your ex’s profile and regretted it immediately.',
-    'You’ve practiced a breakup speech in the mirror.',
-    'You’ve taken over 50 selfies but didn’t post even one.',
-    'You’ve Googled "How to know if they like you back?',
-    'You’ve flirted with someone and later realized they were taken.',
-    'You’ve sent a risky text and then immediately turned off your phone.',
-    'You’ve played a love song and imagined yourself in a movie scene.',
-    'You’ve kept a secret crush on someone in the same group.',
-    'You’ve lied about your relationship status to avoid awkward conversations.',
-    'You’ve deleted a message after sending it, hoping they didn’t read it.',
-    ' You’ve checked your reflection on your phone screen before walking past your crush.',
-    'You’ve acted extra nice to someone just to get something from them.'
-  ];
+  @override
+  void initState() {
+    super.initState();
+    functioncall();
+  }
 
-  List<Icon> icons = [];
+  void functioncall() async {
+    const url = 'https://opentdb.com/api.php?amount=10&type=boolean';
+    final uri = Uri.parse(url);
+    final response = await http.get(uri);
 
+    if (response.statusCode == 200) {
+      final body = response.body;
+      final json = jsonDecode(body);
+
+      setState(() {
+        users = json['results'];
+        if (users.isNotEmpty) {
+          s = users[0]['question'];
+          a = 0;
+          score = 0;
+          icons.clear();
+        }
+      });
+    } else {
+      print('Failed to load data');
+    }
+  }
+
+  void checkAnswer(String userAnswer) {
+    if (users.isEmpty) return;
+
+    String correctAnswer = users[a]['correct_answer'];
+
+    setState(() {
+      if (userAnswer == correctAnswer) {
+        score++;
+        icons.add(
+            Icon(Icons.check_outlined, color: Colors.greenAccent, size: 25));
+      } else {
+        icons.add(Icon(Icons.close, color: Colors.red, size: 25));
+      }
+    });
+  }
+
+  void nextQuestion() {
+    if (a < users.length - 1 && a <= 10) {
+      setState(() {
+        a++;
+        print("value of a is");
+        print(a);
+        s = users[a]['question'];
+      });
+    } else {
+      Alert(
+        context: context,
+        type: AlertType.info,
+        title: "Thank you for playing!",
+        desc: "Your final score is $score out of ${users.length}.",
+        buttons: [
+          DialogButton(
+            child: Text(
+              "RESTART",
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                score = 0;
+                a = 0;
+                icons.clear();
+                s = 'HIT TRUE TO START';
+                users = [];
+              });
+              functioncall();
+            },
+            color: Color.fromRGBO(0, 179, 134, 1.0),
+            radius: BorderRadius.circular(0.0),
+          ),
+        ],
+      ).show();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
-          elevation: 100,
+          elevation: 10,
           backgroundColor: Colors.grey.shade900,
           title: Center(
             child: Text(
-              'QUIZ APP - by keshav',
+              'QUIZ APP - by Keshav',
               style: TextStyle(color: Colors.white, fontFamily: 'Bangers'),
             ),
           ),
@@ -62,175 +124,105 @@ class _MyappState extends State<Myapp> {
         body: Column(
           children: <Widget>[
             Expanded(
-                flex: 8,
+              flex: 8,
+              child: Card(
+                color: Colors.grey.shade900,
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text(
+                      '" $s "',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontFamily: 'Bangers',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: TextButton(
+                onPressed: users.isEmpty
+                    ? null
+                    : () {
+                        checkAnswer("True");
+                        nextQuestion();
+                      },
                 child: Card(
-                  color: Colors.grey.shade900,
+                  margin: EdgeInsets.symmetric(horizontal: 1, vertical: 1),
+                  color: Colors.green.shade400,
                   child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text(
-                        '" $s "',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 40,
-                            fontFamily: 'Bangers'),
+                    child: Text(
+                      'TRUE',
+                      style: TextStyle(
+                        fontSize: 40,
+                        color: Colors.green.shade900,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Bangers',
                       ),
                     ),
                   ),
-                )),
+                ),
+              ),
+            ),
             Expanded(
-                flex: 2,
-                child: TextButton(
-                  onPressed: () {
-                    setState(() {
-                      a++;
-                      if (a == 11) {
-                      } else if (a < 11) {
-                        var n = Random().nextInt(string.length);
-
-                        s = string[n];
-                      }
-
-                      if (a > 1) {
-                        var q = Random().nextInt(2);
-                        if (q == 0) {
-                          icons.add(Icon(
-                            Icons.check_outlined,
-                            color: Colors.greenAccent,
-                            size: 25,
-                          ));
-                        } else if (q == 1) {
-                          icons.add(Icon(
-                            Icons.close,
-                            color: Colors.red,
-                            size: 25,
-                          ));
-                        }
-                      }
-                      if (a == 12) {
-                        icons.clear();
-                        a = 1;
-                        var n = Random().nextInt(string.length);
-                        s = string[n];
-                      }
-                    });
-                  },
-                  child: Card(
-                    margin: EdgeInsets.symmetric(horizontal: 1, vertical: 1),
-                    color: Colors.green.shade400,
-                    child: Center(
-                      child: Text(
-                        'TRUE',
-                        style: TextStyle(
-                          fontSize: 40,
-                          color: Colors.green.shade900,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Bangers',
-                        ),
+              flex: 2,
+              child: TextButton(
+                onPressed: users.isEmpty
+                    ? null
+                    : () {
+                        checkAnswer("False");
+                        nextQuestion();
+                      },
+                child: Card(
+                  margin: EdgeInsets.symmetric(horizontal: 1, vertical: 5),
+                  color: Colors.red.shade300,
+                  child: Center(
+                    child: Text(
+                      'FALSE',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Bangers',
+                        color: Colors.red.shade900,
                       ),
                     ),
                   ),
-                )),
-            Expanded(
-                flex: 2,
-                child: TextButton(
-                  onPressed: () {
-                    setState(() {
-                      a++;
-                      if (a == 11) {
-                        Alert(
-                          context: context,
-                          type: AlertType.success,
-                          title: "RFLUTTER ALERT",
-                          desc: "Flutter is more awesome with RFlutter Alert.",
-                          buttons: [
-                            DialogButton(
-                              child: Text(
-                                "COOL",
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 20),
-                              ),
-                              onPressed: () => Navigator.pop(context),
-                              color: Color.fromRGBO(0, 179, 134, 1.0),
-                              radius: BorderRadius.circular(0.0),
-                            ),
-                          ],
-                        ).show();
-                      } else if (a < 11) {
-                        var n = Random().nextInt(string.length);
-
-                        s = string[n];
-                      }
-
-                      if (a > 1) {
-                        var q = Random().nextInt(2);
-                        if (q == 0) {
-                          icons.add(Icon(
-                            Icons.check_outlined,
-                            color: Colors.greenAccent,
-                            size: 25,
-                          ));
-                        } else if (q == 1) {
-                          icons.add(Icon(
-                            Icons.close,
-                            color: Colors.red,
-                            size: 25,
-                          ));
-                        }
-                      }
-                      if (a == 12) {
-                        icons.clear();
-                        a = 1;
-                        var n = Random().nextInt(string.length);
-                        s = string[n];
-                      }
-                    });
-                  },
-                  child: Card(
-                    margin: EdgeInsets.symmetric(horizontal: 1, vertical: 5),
-                    color: Colors.red.shade300,
-                    child: Center(
-                      child: Text(
-                        'FALSE',
-                        style: TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Bangers',
-                            color: Colors.red.shade900),
-                      ),
-                    ),
-                  ),
-                )),
+                ),
+              ),
+            ),
             Expanded(
               flex: 2,
               child: Card(
                 color: Colors.grey.shade800,
                 child: Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          'SCORE',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontFamily: 'Bangers'),
+                  padding: EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'SCORE: $score',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontFamily: 'Bangers',
                         ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: icons,
-                        )
-                      ],
-                    )),
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: icons,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            SizedBox(
-              height: 20,
-            )
+            SizedBox(height: 20),
           ],
         ),
       ),
