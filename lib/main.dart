@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:rflutter_alert/rflutter_alert.dart';
 
 void main() {
   runApp(Myapp());
@@ -18,6 +17,7 @@ class _MyappState extends State<Myapp> {
   String s = 'HIT TRUE TO START';
   int a = 0;
   int score = 0;
+  bool quizFinished = false;
   List<dynamic> users = [];
   List<Widget> icons = [];
 
@@ -43,6 +43,7 @@ class _MyappState extends State<Myapp> {
           a = 0;
           score = 0;
           icons.clear();
+          quizFinished = false;
         }
       });
     } else {
@@ -51,7 +52,7 @@ class _MyappState extends State<Myapp> {
   }
 
   void checkAnswer(String userAnswer) {
-    if (users.isEmpty) return;
+    if (users.isEmpty || quizFinished) return;
 
     String correctAnswer = users[a]['correct_answer'];
 
@@ -67,41 +68,16 @@ class _MyappState extends State<Myapp> {
   }
 
   void nextQuestion() {
-    if (a < users.length - 1 && a <= 10) {
+    if (a < 9) {
       setState(() {
         a++;
-        print("value of a is");
-        print(a);
         s = users[a]['question'];
       });
     } else {
-      Alert(
-        context: context,
-        type: AlertType.info,
-        title: "Thank you for playing!",
-        desc: "Your final score is $score out of ${users.length}.",
-        buttons: [
-          DialogButton(
-            child: Text(
-              "RESTART",
-              style: TextStyle(color: Colors.white, fontSize: 20),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                score = 0;
-                a = 0;
-                icons.clear();
-                s = 'HIT TRUE TO START';
-                users = [];
-              });
-              functioncall();
-            },
-            color: Color.fromRGBO(0, 179, 134, 1.0),
-            radius: BorderRadius.circular(0.0),
-          ),
-        ],
-      ).show();
+      setState(() {
+        quizFinished = true;
+        s = 'Thank you for playing!\nPress TRUE to restart.';
+      });
     }
   }
 
@@ -131,7 +107,7 @@ class _MyappState extends State<Myapp> {
                   child: Padding(
                     padding: EdgeInsets.all(20),
                     child: Text(
-                      '" $s "',
+                      s,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
@@ -149,8 +125,20 @@ class _MyappState extends State<Myapp> {
                 onPressed: users.isEmpty
                     ? null
                     : () {
-                        checkAnswer("True");
-                        nextQuestion();
+                        if (quizFinished) {
+                          setState(() {
+                            score = 0;
+                            a = 0;
+                            icons.clear();
+                            users = [];
+                            s = 'HIT TRUE TO START';
+                            quizFinished = false;
+                          });
+                          functioncall();
+                        } else {
+                          checkAnswer("True");
+                          nextQuestion();
+                        }
                       },
                 child: Card(
                   margin: EdgeInsets.symmetric(horizontal: 1, vertical: 1),
@@ -172,7 +160,7 @@ class _MyappState extends State<Myapp> {
             Expanded(
               flex: 2,
               child: TextButton(
-                onPressed: users.isEmpty
+                onPressed: (users.isEmpty || quizFinished)
                     ? null
                     : () {
                         checkAnswer("False");
