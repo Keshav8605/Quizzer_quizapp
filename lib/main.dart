@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-import 'package:quizzer/alertstyle.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 
 void main() {
@@ -86,13 +85,6 @@ class _MyappState extends State<Myapp> {
                     setState(() {
                       a++;
                       if (a == 11) {
-
-
-
-
-
-
-
                       } else if (a < 11) {
                         var n = Random().nextInt(string.length);
 
@@ -244,16 +236,4 @@ class _MyappState extends State<Myapp> {
       ),
     );
   }
-}
-
-
-
-
-void keshav(BuildContext context){
-  alert(
-  )
-
-
-
-
 }
